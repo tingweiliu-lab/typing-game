@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🦫 水豚君打字大冒險</title>
+  <style>
+    :root {
+      --bg-color: #f7f3e9;
+      --card-bg: #ffffff;
+      --primary: #8d6e63;
+      --primary-light: #d7ccc8;
+      --accent: #ffb74d;
+      --text: #4e342e;
+      --green: #81c784;
+    }
+
+    body {
+      font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(141, 110, 99, 0.15);
+      width: 100%;
+      max-width: 800px;
+      border: 4px solid var(--primary-light);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+
+    .capybara-avatar {
+      text-align: center;
+      font-size: 50px;
+      margin-bottom: 10px;
+    }
+
+    /* Form Section */
+    .form-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    input, select {
+      padding: 10px;
+      border: 2px solid var(--primary-light);
+      border-radius: 10px;
+      font-size: 16px;
+      outline: none;
+      margin-top: 5px;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: transform 0.1s, background-color 0.2s;
+      display: block;
+      margin: 20px auto 0;
+    }
+
+    .btn:hover {
+      background-color: #ffa726;
+      transform: scale(1.03);
+    }
+
+    /* Typing Area */
+    .hidden { display: none !important; }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-around;
+      background-color: var(--bg-color);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .article-box {
+      background: #fafafa;
+      border: 2px dashed var(--primary-light);
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 20px;
+      line-height: 1.6;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+      user-select: none;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .char { color: #888; }
+    .char.correct { color: #388e3c; background-color: #e8f5e9; }
+    .char.wrong { color: #d32f2f; background-color: #ffebee; }
+    .char.current { border-bottom: 3px solid var(--accent); }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 12px;
+      font-size: 18px;
+      border: 2px solid var(--primary-light);
+      border-radius: 12px;
+      resize: none;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    /* Modal / Result / Leaderboard */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      border: 1px solid var(--primary-light);
+      padding: 8px;
+      text-align: center;
+    }
+
+    th { background-color: var(--primary-light); color: var(--primary); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="capybara-avatar">🦫</div>
+  <h1>水豚君線上打字測驗</h1>
+
+  <!-- 步驟 1: 基本資料設定 -->
+  <div id="setup-section">
+    <div class="form-group">
+      <label>年級
+        <select id="grade">
+          <option value="三年級">三年級</option>
+          <option value="四年級">四年級</option>
+          <option value="五年級">五年級</option>
+        </select>
+      </label>
+      <label>班級
+        <input type="number" id="classNum" placeholder="例：1" min="1" max="20" required>
+      </label>
+      <label>座號
+        <input type="number" id="seatNum" placeholder="例：15" min="1" max="50" required>
+      </label>
+      <label>測驗語言
+        <select id="langType">
+          <option value="中文">中文打字</option>
+          <option value="英文">英文打字</option>
+        </select>
+      </label>
+    </div>
+    <button class="btn" onclick="startTest()">開始打字大冒險！</button>
+  </div>
+
+  <!-- 步驟 2: 打字測驗區 -->
+  <div id="typing-section" class="hidden">
+    <div class="stats-bar">
+      <div>⏳ 剩餘時間: <span id="timer">180</span> 秒</div>
+      <div>⚡ 速度: <span id="speed">0</span> <span id="speed-unit">字/分</span></div>
+      <div>🎯 正確率: <span id="accuracy">100</span>%</div>
+    </div>
+
+    <div class="article-box" id="article-display"></div>
+    <textarea id="typing-input" placeholder="點擊這裡開始打字..." autofocus></textarea>
+  </div>
+</div>
+
+<!-- 步驟 3: 成績與排行榜彈窗 -->
+<div id="result-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2>🎉 測驗結束！</h2>
+    <div class="capybara-avatar">🍊🦫</div>
+    <p id="result-stats"></p>
+
+    <h3>🏆 <span id="rank-title"></span> 排行榜</h3>
+    <div id="leaderboard-loading">載入排行榜中...</div>
+    <table id="leaderboard-table" class="hidden">
+      <thead>
+        <tr>
+          <th>名次</th>
+          <th>班級</th>
+          <th>座號</th>
+          <th>速度</th>
+          <th>正確率</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+
+    <button class="btn" onclick="location.reload()">再試一次</button>
+  </div>
+</div>
+
+<script>
+  // 🔗 請替換成您的 Google Apps Script Web App URL
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyfNdKgx8f9iP0PYQFzyu-Q6JehCAzxhkrFU9KUE_Qlm-Ip9fuobo36DuTyquw-oNWP-Q/exec";
+
+  // 預設文章庫 (200~300 字左右)
+  const articles = {
+    "中文": [
+      "水豚是世界上體型最大的齧齒類動物，個性非常溫和，喜歡泡在水裡曬太陽。牠們常常跟其他小動物成為好朋友，連小鳥或烏龜都喜歡靠在水豚身上休息。水豚學會保持冷靜與友善，這讓牠們在森林裡大受歡迎。我們學習打字時也可以像水豚一樣，保持平穩的心情，一步一步穩定向前，這樣就能越打越快，練習也會變得更有趣味。",
+      "森林裡的早晨總是充滿陽光與鳥鳴，小動物們紛紛起床展開活力充沛的一天。小兔子在草地上蹦蹦跳跳，小熊則在樹下尋找甜美的蜂蜜。大家都知道學習新技能需要不斷練習，就像練習打字一樣，一開始可能會按錯鍵，但只要每天花三分鐘認真練習，指尖就會變得越來越靈活，最後就能像鋼琴家一樣順暢地打出一整篇文章。",
+      "海洋是一個神秘又美麗的世界，裡面住著各式各樣的生物。彩色的熱帶魚在珊瑚礁之間穿梭，巨大的鯨魚在深海裡唱著動聽的歌。保護海洋環境是我們每個人的責任，少用塑膠袋、不亂丟垃圾，才能讓海洋生物有一個乾淨的家。正如我們在課堂上學習各科知識，一點一滴累積起來，就能成為對社會有貢獻的好孩子。"
+    ],
+    "英文": [
+      "The capybara is the largest rodent in the world. They live in South America near rivers and lakes. Capybaras are famous for being friendly and calm. Many other animals like to sit on them or rest next to them. When we practice typing every day, we should also stay calm and focused. Practice makes perfect, and soon you will type faster than before.",
+      "Learning a new skill takes time and patience. When you start typing, you might make a few mistakes, but that is totally okay. Keep your fingers on the right keys and look at the screen instead of your keyboard. With continuous effort, your muscle memory will grow, and you will become a typing master in no time.",
+      "Summer is a wonderful season full of warm sunshine and outdoor adventures. Children enjoy swimming in the pool, eating sweet ice cream, and playing games with their best friends in the park. Everyday activities can be full of fun if we keep a positive attitude and share good moments with others."
+    ]
+  };
+
+  let selectedArticle = "";
+  let timerInterval = null;
+  let timeLeft = 180; // 3分鐘
+  let isStarted = false;
+  let studentInfo = {};
+
+  function startTest() {
+    const grade = document.getElementById("grade").value;
+    const classNum = document.getElementById("classNum").value;
+    const seatNum = document.getElementById("seatNum").value;
+    const langType = document.getElementById("langType").value;
+
+    if (!classNum || !seatNum) {
+      alert("請輸入正確的班級與座號！");
+      return;
+    }
+
+    studentInfo = { grade, classNum, seatNum, langType };
+
+    // 隨機抽題
+    const list = articles[langType];
+    selectedArticle = list[Math.floor(Math.random() * list.length)];
+
+    // 渲染文章內容 HTML
+    const articleBox = document.getElementById("article-display");
+    articleBox.innerHTML = selectedArticle.split("").map((char, index) => 
+      `<span class="char ${index === 0 ? 'current' : ''}">${char}</span>`
+    ).join("");
+
+    document.getElementById("speed-unit").innerText = langType === "中文" ? "字/分" : "WPM";
+    document.getElementById("setup-section").classList.add("hidden");
+    document.getElementById("typing-section").classList.remove("hidden");
+
+    const inputArea = document.getElementById("typing-input");
+    inputArea.focus();
+    inputArea.addEventListener("input", handleTyping);
+  }
+
+  function handleTyping() {
+    if (!isStarted) {
+      isStarted = true;
+      startTimer();
+    }
+
+    const inputVal = document.getElementById("typing-input").value;
+    const charElements = document.querySelectorAll(".char");
+    
+    let correctChars = 0;
+
+    for (let i = 0; i < charElements.length; i++) {
+      const targetChar = selectedArticle[i];
+      const typedChar = inputVal[i];
+
+      charElements[i].className = "char"; // reset
+
+      if (typedChar == null) {
+        if (i === inputVal.length) charElements[i].classList.add("current");
+      } else if (typedChar === targetChar) {
+        charElements[i].classList.add("correct");
+        correctChars++;
+      } else {
+        charElements[i].classList.add("wrong");
+      }
+    }
+
+    // 計算即時正確率與速度
+    const totalTyped = inputVal.length;
+    const accuracy = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 100;
+    const elapsedMinutes = (180 - timeLeft) / 60 || 0.01;
+
+    let speed = 0;
+    if (studentInfo.langType === "中文") {
+      speed = Math.round(correctChars / elapsedMinutes); // 中打：正確字數/分
+    } else {
+      // 英打 WPM = (正確字元數 / 5) / 分鐘
+      speed = Math.round((correctChars / 5) / elapsedMinutes);
+    }
+
+    document.getElementById("accuracy").innerText = accuracy;
+    document.getElementById("speed").innerText = speed;
+
+    // 若整篇文章打完提前結束
+    if (inputVal.length >= selectedArticle.length) {
+      endTest();
+    }
+  }
+
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      document.getElementById("timer").innerText = timeLeft;
+      if (timeLeft <= 0) {
+        endTest();
+      }
+    }, 1000);
+  }
+
+  function endTest() {
+    clearInterval(timerInterval);
+    document.getElementById("typing-input").disabled = true;
+
+    const finalSpeed = parseInt(document.getElementById("speed").innerText);
+    const finalAccuracy = parseInt(document.getElementById("accuracy").innerText);
+
+    studentInfo.speed = finalSpeed;
+    studentInfo.accuracy = finalAccuracy;
+
+    // 顯示結果
+    document.getElementById("result-stats").innerText = 
+      `${studentInfo.grade} ${studentInfo.classNum}班 ${studentInfo.seatNum}號\n` +
+      `打字速度：${finalSpeed} ${studentInfo.langType === "中文" ? '字/分' : 'WPM'} | 正確率：${finalAccuracy}%`;
+
+    document.getElementById("rank-title").innerText = `${studentInfo.grade} (${studentInfo.langType}組)`;
+    document.getElementById("result-modal").classList.remove("hidden");
+
+    // 上傳成績並載入排行榜
+    uploadAndFetchLeaderboard();
+  }
+
+  async function uploadAndFetchLeaderboard() {
+    try {
+      // 1. POST 成績到 Google Apps Script
+      if (GAS_WEB_APP_URL !== "YOUR_GAS_WEB_APP_URL_HERE") {
+        await fetch(GAS_WEB_APP_URL, {
+          method: "POST",
+          body: JSON.stringify(studentInfo)
+        });
+
+        // 2. GET 最新排行榜
+        const response = await fetch(GAS_WEB_APP_URL);
+        const data = await response.json();
+        renderLeaderboard(data);
+      } else {
+        document.getElementById("leaderboard-loading").innerText = "⚠️ 請設置有效的 Google Apps Script 網址以顯示排行榜。";
+      }
+    } catch (err) {
+      document.getElementById("leaderboard-loading").innerText = "載入排行榜失敗，請重新整理。";
+    }
+  }
+
+  function renderLeaderboard(data) {
+    // 依「同年級」與「同語言」篩選
+    let filtered = data.filter(item => 
+      item.grade === studentInfo.grade && item.langType === studentInfo.langType
+    );
+
+    // 排序：先比速度（高到低），再比正確率（高到低）
+    filtered.sort((a, b) => {
+      if (b.speed !== a.speed) return b.speed - a.speed;
+      return b.accuracy - a.accuracy;
+    });
+
+    const tbody = document.getElementById("leaderboard-body");
+    tbody.innerHTML = "";
+
+    filtered.slice(0, 10).forEach((item, index) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${item.classNum} 班</td>
+        <td>${item.seatNum} 號</td>
+        <td>${item.speed}</td>
+        <td>${item.accuracy}%</td>
+      `;
+      // 強調當前學生
+      if (item.classNum == studentInfo.classNum && item.seatNum == studentInfo.seatNum) {
+        tr.style.backgroundColor = "#fff3e0";
+        tr.style.fontWeight = "bold";
+      }
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("leaderboard-loading").classList.add("hidden");
+    document.getElementById("leaderboard-table").classList.remove("hidden");
+  }
+</script>
+
+</body>
+</html>
