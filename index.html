@@ -196,7 +196,13 @@
         </select>
       </label>
       <label>班級
-        <input type="number" id="classNum" placeholder="例：1" min="1" max="20" required>
+        <select id="classNum">
+          <option value="甲班">甲班</option>
+          <option value="乙班">乙班</option>
+          <option value="丙班">丙班</option>
+          <option value="丁班">丁班</option>
+          <option value="戊班">戊班</option>
+        </select>
       </label>
       <label>座號
         <input type="number" id="seatNum" placeholder="例：15" min="1" max="50" required>
@@ -251,8 +257,8 @@
 </div>
 
 <script>
-  // 🔗 請替換成您的 Google Apps Script Web App URL
-  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzuTQVsIPYIX93N26fOG02aDYsh6cd_tSW_sFGL9iWhmtH2H3-SToRjIroQvaK-AeRhCg/exec";
+  // 🔗 您的 Google Apps Script Web App URL 放在下方雙引號內
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7znk9xqvmlJv4Kf-PQOsfpJMlB4JxRHU0EoKUJ2M6B3e9dinxR0ILGSV60kOOIvNY/exec";
 
   // 預設文章庫 (200~300 字左右)
   const articles = {
@@ -280,8 +286,8 @@
     const seatNum = document.getElementById("seatNum").value;
     const langType = document.getElementById("langType").value;
 
-    if (!classNum || !seatNum) {
-      alert("請輸入正確的班級與座號！");
+    if (!seatNum) {
+      alert("請輸入正確的座號！");
       return;
     }
 
@@ -377,7 +383,7 @@
 
     // 顯示結果
     document.getElementById("result-stats").innerText = 
-      `${studentInfo.grade} ${studentInfo.classNum}班 ${studentInfo.seatNum}號\n` +
+      `${studentInfo.grade} ${studentInfo.classNum} ${studentInfo.seatNum}號\n` +
       `打字速度：${finalSpeed} ${studentInfo.langType === "中文" ? '字/分' : 'WPM'} | 正確率：${finalAccuracy}%`;
 
     document.getElementById("rank-title").innerText = `${studentInfo.grade} (${studentInfo.langType}組)`;
@@ -387,24 +393,48 @@
     uploadAndFetchLeaderboard();
   }
 
-  async function uploadAndFetchLeaderboard() {
-    try {
-      // 1. POST 成績到 Google Apps Script
-      if (GAS_WEB_APP_URL !== "YOUR_GAS_WEB_APP_URL_HERE") {
-        await fetch(GAS_WEB_APP_URL, {
-          method: "POST",
-          body: JSON.stringify(studentInfo)
-        });
+  // 全域 callback 函式供 JSONP 呼叫
+  window.handleLeaderboardResponse = function(data) {
+    const loadingEl = document.getElementById("leaderboard-loading");
+    if (Array.isArray(data)) {
+      renderLeaderboard(data);
+    } else {
+      loadingEl.innerText = "載入排行榜資料失敗。";
+    }
+  };
 
-        // 2. GET 最新排行榜
-        const response = await fetch(GAS_WEB_APP_URL);
-        const data = await response.json();
-        renderLeaderboard(data);
-      } else {
-        document.getElementById("leaderboard-loading").innerText = "⚠️ 請設置有效的 Google Apps Script 網址以顯示排行榜。";
+  async function uploadAndFetchLeaderboard() {
+    const loadingEl = document.getElementById("leaderboard-loading");
+    try {
+      if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("YOUR_GAS")) {
+        loadingEl.innerText = "⚠️ 請設定有效的 Google Apps Script 網址。";
+        return;
       }
+
+      // 1. 上傳成績 (使用 form-urlencoded 避開 preflight 攔截)
+      await fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(studentInfo)
+      });
+
+      // 2. 稍微等待試算表寫入
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // 3. 使用 JSONP 動態載入排行榜資料 (完全繞過 CORS)
+      const script = document.createElement("script");
+      script.src = `${GAS_WEB_APP_URL}?callback=handleLeaderboardResponse&t=${new Date().getTime()}`;
+      script.onerror = function() {
+        loadingEl.innerText = "載入排行榜失敗，請重新整理頁面。";
+      };
+      document.body.appendChild(script);
+
     } catch (err) {
-      document.getElementById("leaderboard-loading").innerText = "載入排行榜失敗，請重新整理。";
+      console.error(err);
+      loadingEl.innerText = "載入排行榜失敗，請重新整理頁面。";
     }
   }
 
@@ -427,7 +457,7 @@
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${index + 1}</td>
-        <td>${item.classNum} 班</td>
+        <td>${item.classNum}</td>
         <td>${item.seatNum} 號</td>
         <td>${item.speed}</td>
         <td>${item.accuracy}%</td>
